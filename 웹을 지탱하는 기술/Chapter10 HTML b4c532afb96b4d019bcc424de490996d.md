@@ -130,6 +130,75 @@ HTML/XHTML의 서식을 배우기 위해서는 메타언어인 XML의 스펙을 
 
 # 06 링크
 
+하이퍼미디어 포맷으로서의 HTML
+
+### <a>
+
+1. 다른 웹페이지에 링크하기 위해 사용
+
+```html
+상세한 정보는 <a href="http://mentorbook.co.kr">멘토르 출판사의 웹페이지</a>를 참조해 주십시오.
+```
+
+### <link>
+
+1. 다른 웹 페이지로 링크하기 위해 사용
+2. HTML의 헤더에서 웹페이지 사이의 관계를 지정하기 위해 사용
+
+```html
+<head>
+	<link rel="index" href="http://example.com/index.html"/>
+  <link rel="prev" href="http://example.com/1.html"/>
+  <link rel="next" href="http://example.com/3.html"/>
+</head>
+```
+
+### 오브젝트  - <img>, <object>
+
+1. 이미지, 동영상 등 삽입
+
+```html
+<img src="http://example.com/children.png" alt="아이들 사진" />
+
+<object data="http://example.com/children.mpeg">아이들의 동영상</object>
+```
+
+### 폼 - 링크하는 곳의 URI에 대해 GET과 POST를 발행
+
+- 기본구조
+
+    <form> 요소와 폼 컨트롤 요소(<input type="text">, <input type="radio">, <select> 등) 
+
+- 타깃이 되는 URI : <form>요소의 action 속성으로 지정
+- 이용할 메서드 : <form>요소의 method 속성으로 지정
+1. 폼에 의한 GET
+2. 폼에 의한 POST
+
+**application/x-www-form-urlencoded 형식**
+&으로 분리되고, "=" 기호로 값과 키를 연결하는 key-value tuple로 인코딩되는 값입니다.
+
 # 07 링크 관련 - 링크의 의미를 지정한다.
 
+웹 API와 같이 프로그램이 클라이언트인 경우, 
+
+HTML과 Atom은 링크의 의미를 프로그램이 읽을 수 있는 상태로 기술하기 위한 기구
+
+### rel 속성
+
+링크 관계 : 링크하는 쪽과 링크되는 쪽의 리소스가 어떤 관계에 있는지 기술
+
+```html
+<head>
+	<link rel="stylesheet" href="http://example.com/bass.css"/>
+</head>
+```
+
+### microformats
+
+링크 관계의 확장!
+
+![Chapter10%20HTML%20b4c532afb96b4d019bcc424de490996d/Untitled%205.png](Chapter10%20HTML%20b4c532afb96b4d019bcc424de490996d/Untitled%205.png)
+
 # 08 하이퍼미디어 포맷으로서의 HTML
+
+HTML로 링크를 설계할 때는 '링크를 따라가는 것으로 애플리케이션의 상태가 변화한다'는 사실을 의식하잦.
