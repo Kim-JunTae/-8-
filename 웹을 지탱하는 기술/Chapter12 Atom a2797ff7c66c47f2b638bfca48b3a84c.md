@@ -123,12 +123,202 @@ Atom의 이름공간은 [https://www.w3.org/2005/atom](https://www.w3.org/2005/a
 ### 엔트리의 내용
 
 - 플레인 텍스트, 이스케이프된 HTML, XHTML
-- XML의 내용
+
+    ```html
+    //플레인 텍스트의 예
+    <entry xmlns="http://www.w3.org/2005/Atom">
+    	...
+    	<content type="text">단순한 텍스트가 들어감</content>
+    </entry>
+
+    //HTML의 예
+    <entry xmlns="http://www.w3.org/2005/Atom">
+    	...
+    	<content type="html">&lt;p>에스케이프된 HTML &lt;br>이 들어갑니다.&lt;/p></content>
+    </entry>
+
+    //XHTML의 예
+    <entry xmlns="http://www.w3.org/2005/Atom">
+    	...
+    	<content type="xhtml">
+    		<div xmlns="http://www.w3.org/1999/xhtml">
+    			<p>XHTML이 그대로 </br>들어갑니다</p>		
+    		</div>
+    	</content>
+    </entry>
+    ```
+
+    <content> 의 type 속성에는 이 3가지 이외의 미디어 타입도 지정 가능
+
+- XML의 내용 : 미디어 타입이 application/xml, text/xml 또는 서브 타입이 '+xml'로 끝날 경우
+
+    SVG(Scalable Vector Graphics) 문서 : 벡터 이미지를 XML로 표현하는 포맷
+
+    ```html
+    <entry xmlns="http://www.w3.org/2005/Atom">
+    	...
+    	<content type="image/svg+xml">
+    		<svg xmlns="http://www.w3.org/2000/svg" 
+    				 xml:space="preserve" width="5.5in" height=".5in">
+    			<text style="fill:red;" y="15">This is SVG</text>
+    		</svg>
+    	</content>
+    </entry>
+    ```
+
 - 텍스트의 내용
+
+    엔트리 리소스는 XML 이외의 텍스트도 가질 수 있습니다.
+
+    ```html
+    //CSV를 내용으로 가지는 엔트리 리소스
+    <entry xmlns="http://www.w3.org/2005/Atom">
+    	...
+    	<content type="text/csv">
+    		상품명, 가격, 개수
+    		사과, 150, 1
+    		귤, 300, 5
+    	</content>
+    </entry>
+    ```
+
 - 텍스트 이외의 내용
+
+    이미지와 같은 바이너리 데이터를 <content>에 넣을 때 Base64로 인코딩합니다.
+
+    ```html
+    <entry xmlns="http://www.w3.org/2005/Atom">
+    	...
+    	<content type="image/jpeg">
+    		Base64로 인코딩한 JPEG 이미지
+    	</content>
+    </entry>
+    ```
+
+    Base64로 인코딩한 데이터는 인코딩/디코딩 처리에 오버헤드가 걸리고 XML문서가 거대해지기 때문에 지나치게 큰 파일에는 적합하지 않습니다.
+
+    용량이 큰 이미지나 음성, 동영상 등의 바이너리를 <content> 요소에 넣을 때는 src 속성을 사용해 외부 리소스를 참조합니다.
+
+    ```html
+    <entry xmlns="http://www.w3.org/2005/Atom">
+    	...
+    	<content type="image/jpeg" src="http://example.com/image/foo_bar.jpg"/>
+    </entry>
+    ```
+
+    src 속성으로 외부 리소스를 참조하고 있는 엔트리 리소스를 '미디어 링크 엔트리'라고 부릅니다.
+    또한 미디어 링크 엔트리가 참조하고 있는 이미지 리소스를 '미디어 리소스'라고 부릅니다.
 
 # 04 피드 - 엔트리의 집합
 
+멤버 리소스를 여러 개 가지는 컬렉션 리소스의 표현이 피드(feed)
+
+```html
+<feed xmlns="http://www.w3.org/2005/Atom">
+	<id>tag:example.com,2010:feed</id>
+	<title>일기</title>
+	<author>
+		<name>야근맨</name>
+	</author>
+	<updated>2015-08-31T13:11:54Z</updated>
+	<link rel="alternate" href="http://example.com"/>
+	<link rel="self" href="http://example.com/feed"/>
+	<entry>
+		<id>tag:example.com,2021-01-26:entry:2345</id>
+		<title>일기2</title>
+		<updated>2021-01-26T23:04:55Z</updated>
+		<link href="http://example.com/2345"/>
+		<content>야근 너무 싫어</content>
+	</entry>
+	<entry>
+		<id>tag:example.com,2021-01-26:entry:2345</id>
+		<title>일기3</title>
+		<updated>2021-01-26T23:04:55Z</updated>
+		<link href="http://example.com/2345"/>
+		<content>칼퇴하고 싶어</content>
+	</entry>
+</feed>
+```
+
+### 엔트리와 공통 메타 데이터
+
+<feed> 요소는 엔트리와 같은 메타 데이터를 가질 수 있습니다.
+
+<id>,<title>,<author>,<updated>
+
+### 피드의 독자적인 메타 데이터
+
+- 서브타이틀 : 타이틀에서 다 설명하지 못한 설명을 기술
+
+    ```html
+    <subtitle type="text">피드의 개요</subtitle>
+    ```
+
+- 생성 프로그램 : 피드를 생성한 프로그램의 정보를 나타냅니다.
+
+    ```html
+    <generator uri="http://wordpress.org/" version="2.8.6">
+    	WordPress
+    </generator>
+    ```
+
+- 아이콘 : favicon(웹 사이트와 웹 페이지에 관련된 아이콘)
+
+    ```html
+    <icon>http://blog.example.com/image/favicon.ico</icon>
+    ```
+
+- 로고 : 이 피드를 상징하는 이미지를 지정
+
+    ```html
+    <logo>http://blog.example.com/image/logo.png</logo>
+    ```
+
 # 05 Atom의 확장
 
+```html
+//예
+
+```
+
+### Atom Threading Extenstions - 스레드를 표현한다.
+
+- 이름공간
+- <thr:in-reply-to>요소
+- replies 링크 관계와 thr:count 속성/thr:update 속성
+
+### Atom License Extension - 라이선스 정보를 표현한다.
+
+- 이름공간
+- 복수 라이선스
+- 라이선스를 지정하지 않는 경우
+- Atom의 <rights>요소와의 관계
+
+### Feed Paging and Archiving - feed를 분할한다.
+
+- 이름공간
+- 피드의 종류
+- 완전 피드
+- 페이지화 피드
+- 아카이브된 피드
+
+### OpenSearch - 검색결과를 표현한다.
+
+- 이름공간
+- <os:totalResults> 요소
+- <os:startIndex> 요소
+- <os:itemsPerPage> 요소
+- <os:Query> 요소
+- 링크 관계
+
 # 06 Atom을 활용한다
+
+Atom은 타이틀, 저자, 갱신일시라는 기본적인 메타 데이터를 갖춘 리소스 표현을 위한 포맷
+
+다양한 애플리케이션용 확장이 준비된 포맷
+
+블로그 이외에도 팟 캐스트, 사진관리, 검색엔진등에서 사용
+
+XML의 이름공간 구조를 사용하여 Atom에 독자적인 요소를 추가하고 있다.
+
+다음장의 AtomPub와 함께 사용하면 리소스의 표현뿐만 아니라 HTTP를 활용한 조작도 가능해 진다.
