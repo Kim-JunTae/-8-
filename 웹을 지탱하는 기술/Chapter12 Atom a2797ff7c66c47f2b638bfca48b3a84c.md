@@ -278,38 +278,130 @@ Atom의 이름공간은 [https://www.w3.org/2005/atom](https://www.w3.org/2005/a
 
 ```html
 //예
-
+<feed xmlns="http://www.w3.org/2005/Atom"
+			xmlns:os="http://a9.com/-/spec/opensearch/1.1">
+	<title>'REST'의 검색결과</title>
+	<id>http://example.com/search?q=REST</id>
+	<author><name><Example CO.Ltd</name></author>
+	<os:totalResults>3392</os:totalResults>
+	<os:startIndex>21</os:startIndex>
+	<os:itemsPerPage>10</os:itemsPerPage>
+	<entry>
+		<title>REST 입문</title>
+		<id>http://yohei-y.blogspot.com/2005/04/rest_23.html</id>
+		<link href="http://yohei-y.blogspot.com/2005/04/rest_23.html"/>
+	</entry>
+	...
+</feed>
 ```
+
+3개의 확장요소를 포함하고 있음. 'os'라는 접두어가 나타내는 OpenSearch의 이름공간에 속함
+
+OpenSearch는 검색결과의 표준 포맷으로서 Atom과는 완전히 별도로 표준화되어 있는 스펙입니다.
+
+Atom의 이름공간 이외의 확장요소는 '외부 마크업'이라고 부릅니다.
 
 ### Atom Threading Extenstions - 스레드를 표현한다.
 
 - 이름공간
-- <thr:in-reply-to>요소
-- replies 링크 관계와 thr:count 속성/thr:update 속성
+
+    ```html
+    //이름공간
+    http://purl.org/syndication/thread/1.0
+
+    //<thr:in-reply-to> 요소
+    	//ref 속성 : <thr:in-reply-to> 요소가 있는 엔트리가 참조하는 엔트리의 ID. 필수
+    	//href 속성 : 이 엔트리의 표현을 얻기 위한 URI. 임의
+    	//type 속성 : href 속성에서 참조하는 리소스의 미디어 타입. 임의
+    	//source 속성 : ref 속성에서 참조하는 엔트리를 포함하는 피드의 URI. 임의
+    <feed xmlns="http://www.w3.org/2005/Atom"
+    			xmlns:thr="http://purl.org/syndication/thread/1.0">
+    	<id>http://bbs.example.com/feed</id>
+    	<title>게시판</title>
+    	<updated>2010-07-28T12:00:OOZ</updated>
+    	<link rel="alternate" href="http//bbs.exmaple.com/"/>
+    	<link rel="self" href="http://bbs.example.com/feed"/>
+    	<entry>
+    		<id>tag:bbs.example.com.2010:1</id>
+    		<title>XML과 REST에 대해서</title>
+    		<updated>2010-07-27T12:12:12Z</updated>
+    		<link href="http://bbs.example.com/entries/1"/>
+    		<summary>XML과 REST의 관계란?</summary>
+    	</entry>
+    	<entry>
+    		<id>tag:bbs.example.com.2010:1.1</id>
+    		<title>Re:XML과 REST에 대해서</title>
+    		<updated>2010-07-28T12:00:00Z</updated>
+    		<link href="http://bbs.example.com/entries/1/1"/>
+    		<link rel="related" href="http://bbs.example.com/entries/1"/>
+    		<thr:in-reply-to
+    			ref="tag:example.org.2010:1"
+    			type="application/xhtml+xml"
+    			href="http://bbs.example.com/entries/1"/>
+    		<summary>직접적인 관계는 없습니다.</summary>
+    		</entry>
+    </feed>
+
+    //replies 링크 관계와 thr:count 속성/thr:update 속성
+    	//rel 속성 : replies라는 값. 필수
+    	//href 속성 : 이 엔트리에 대한 답글이 있는 리소스의 URI. 필수
+    	//type 속성 : href에서 참조하는 f소스의 미디어 타입. 생략시 디폴트는 application/atom_xml이 됨. 임의
+    	//thr:count 속성 : href로 참조하는 리소스의 총 답글수(양수값). 임의
+    	//thr:updated 속성 : 이 엔트리에 대한 답글이 마지막으로 갱신된 시각. 임의
+    <entry xmlns="http:://www.w3.org/2005/Atom"
+    			 xmlns:thr="http://purl.org/syndication/thread/1.0">
+    	<id>tag:blog.example.com,2010:1</id>
+    	<title>최초의 블로그 포스팅</title>
+    	<author><name>야마모토 요헤이</name></author>
+    	<updated>2010-08-24T10:00:00Z</updated>
+    	<link href="http://blog.exmaple.jp/entries/1">
+    	<link rel ="replies"
+    				href="blog.example.com/entries/1/commentsfeed"
+    				type="application/atom+xml"
+    				thr:count="10"
+    				thr:updated="2010-08-24T10:20:00Z"/>
+    	<thr:total>15</thr:total>
+    	<summary>최초의 기사입니다.</summary>
+    </entry>
+
+    //<thr:total> 요소 : 이 엔트리에 대한 답글의 총 수
+    ```
 
 ### Atom License Extension - 라이선스 정보를 표현한다.
 
-- 이름공간
-- 복수 라이선스
-- 라이선스를 지정하지 않는 경우
-- Atom의 <rights>요소와의 관계
+- 이름공간, <link rel="license" href="http://creativecommons.org/Licenses/by-nc/3.0/"/>
+- 복수 라이선스 : <entry>요소와 <feed> 요소는 라이선스 링크를 여러개 가질 수 있음
+- 라이선스를 지정하지 않는 경우 : 특정 라이선스를 지정하지 않는다는 것을 명시, 
+unspecified 링크 지정
+- Atom의 <rights>요소와의 관계 : <rights>요소는 사람이 읽고 이해하는 것을 목적
 
 ### Feed Paging and Archiving - feed를 분할한다.
 
-- 이름공간
-- 피드의 종류
-- 완전 피드
-- 페이지화 피드
-- 아카이브된 피드
+- 이름공간, http://purl.org/syndication/history/1.0, fh라는 접두어는 이 이름공간에 연결
+- 피드의 종류 : 완전 피드, 페이지화 피드, 아카이브된 피드
+    - 완전 피드
+    - 페이지화 피드
+
+        ![Chapter12%20Atom%20a2797ff7c66c47f2b638bfca48b3a84c/Untitled%202.png](Chapter12%20Atom%20a2797ff7c66c47f2b638bfca48b3a84c/Untitled%202.png)
+
+    - 아카이브된 피드
+
+        ![Chapter12%20Atom%20a2797ff7c66c47f2b638bfca48b3a84c/Untitled%203.png](Chapter12%20Atom%20a2797ff7c66c47f2b638bfca48b3a84c/Untitled%203.png)
 
 ### OpenSearch - 검색결과를 표현한다.
 
-- 이름공간
-- <os:totalResults> 요소
-- <os:startIndex> 요소
-- <os:itemsPerPage> 요소
-- <os:Query> 요소
-- 링크 관계
+- 4가지 파트 구분
+    - Description Document : 검색엔진이 제공하는 검색기능을 프로그램이 이해할 수 있는 형식으로 기술하는 XML형식
+    - URL Template Syntax : 검색결과 리소스를 표현하는 URL의 검색 쿼리 부분을 파라미터화 하는 스펙
+    - Query Element : URL Template Syntax에서 사용하는 검색 파라미터를 기술하는 XML 요소. Description Document와 검색결과 모두 이용한다.
+    - Response Element : 검색결과를 Atom과 RSS 2.0 등의 피드 형식으로 표현하기 위한 확장 요소
+
+- 이름공간, [http://a9.com/-/opensearch/1.1/](http://a9.com/-/opensearch/1.1/), os라는 접두어는 이 이름공간에 연결
+- <os:totalResults> 요소 : 검색결과 총 수를 표현하는 양의 정수
+- <os:startIndex> 요소 : 이 피드에 들어있는 검색결과의 최초 엔트리의 인덱스
+- <os:itemsPerPage> 요소 : 한 피드에 들어가는 최대 검색결과 엔트리 수
+- <os:Query> 요소 : 검색 쿼리를 나타냄
+- 링크 관계 : 표 12.2의 링크 관계를 사용해 검색결과를 페이지화 할 수 있음
 
 # 06 Atom을 활용한다
 
