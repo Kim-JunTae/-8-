@@ -176,23 +176,94 @@ Content-Type: application/atom+xml; type=entry
 ### 미디어 리소스의 조작
 
 - 미디어 리소스의 작성
+
+    <entry>요소의 XML문서는 이미지 본체를 보낼 수 없음. 이미지 본체를 POST함
+
+    ```html
+    //요청
+    POST/media HTTP/1.1
+    Host: blog.example.com
+    Content-Type: image/jpeg
+    Authorization: Basic dXNIcjpwYXNz
+    Slug: %EC%9E%A5%EB%AF%B8
+
+    binary data...
+
+    //응답
+    HTTP/1.1 201 Created
+    Content-Type: application/atom+xml
+    Location: http://blog.example.com/media/%EC%9E%A5%EB%AF%B8.atom
+
+    <entry xmlns="http://www.w3.org/2005/Atom">
+    	<id>tag:blog.example.com,2010-10-04:blog:media:%EC%9E%A5%EB%AF%B8</id>
+    	<title>일본어...</title>
+    	<author><name>test</name></author>
+    	<content type="image/jpeg" src="http://blog.example.com/media/%EC%9E%A5%EB%AF%B8.jpg"/>
+    	<link rel="edit-media" href="http://blog.example.com/media/%EC%9E%A5%EB%AF%B8.jpg"/>
+    	<link rel="edit" href="http://blog.example.com/media/%EC%9E%A5%EB%AF%B8.atom"/>
+    </entry>
+    ```
+
 - 미디어 리소스의 갱신
+
+    이미지 데이터를 갱신하고 싶을 때 edit-media 링크로 참조할 수 있는 URI에 PUT을 보냅니다.
+
+    ```html
+    //요청
+    PUT/media/%EC%9E%A5%EB%AF%B8.jpg HTTP/1.1
+    Host: blog.example.com
+    Authorization: Basic dGVzdDpwYXNz
+    Content-Type: imaage/jpeg
+
+    binary data...
+
+    //응답
+    HTTP/1.1 200 OK
+    ```
 
 # 05 서비스 문서
 
 ### 미디어 타입
 
+Content-Type 헤더에서의 application/atomsvc+xml
+
 ### <service>요소
+
+서비스 문서에 등장하는 Atom의 이름공간에 소속된 요소는 'atom:'이라는 접두어를 붙혀서 표현
 
 ### <workspace>요소
 
+<service>요소는 자식요소로 반드시 하나 이상의 <workspace>요소를 가집니다.
+
 ### <collection>요소
+
+<workspace>요소는 0개 이상의 <collection>요소를 가집니다.
 
 ### <accept>요소
 
+<accept>요소는 이 컬렉션 리소스가 받아들일 수 있는 미디어 타입을 보여줍니다.
+
 ### 카테고리
 
-- 카테고리 문서
+- 카테고리 문서 : <categories href="......">, href 속성이 있다면 자식요소를 가질 수 없음
 - 카테고리의 추가
 
 # 06 AtomPub에 적합한 웹 API
+
+AtomPub은 타이틀과 갱신일자 같은 기본적인 메타 데이터를 가진 리소스인 엔트리를 CRUD하는 웹 API를 위한 프로토콜입니다.
+
+실제로 Google은 AtomPub을 베이스로한 GData를 사용해 다양한 웹 서비스의 API를 제공하고 있습니다. AtomPub라는 공통 프로토콜을 사용하여 블로그, 캘린더, 스프레드시트, 앨범 등을 편집할 수 있도록 되어있는 것입니다.
+
+### AtomPub에 적합한 웹 API
+
+- 블로그 서비스의 API
+- 검색 기능을 가진 데이터베이스의 API
+- 멀티미디어 파일의 리포지터리의 API
+- 태그를 사용한 소셜 서비스의 API
+
+### AtomPub에 적합하지 않은 웹 API
+
+- Comet을 이용하는 실시간성이 중요한 API
+- 영상의 스트림 전송 등 HTTP 이외의 프로토콜을 필요로 하는 API
+- 데이터의 계층구조가 중요한 API
+- '타이틀', '작성자', '갱신일시' 같은 Atom 포맷이 제공하는 메타 데이터가 불필요한 API
