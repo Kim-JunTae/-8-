@@ -477,7 +477,108 @@ Content-Type: application/xml; charset=utf-8
 
 <D:locktoken> 요소 : 이후에 이 잠금을 이용해 리소스를 조작할 때는 If헤더에 이 잠금 토큰을 지정할 필요가 있다.
 
+- 잠금이 끝난 리소스를 편집하기 위해서는 If헤더로 잠금 토큰을 지정해야함.
+- 잠금 토큰을 지정하지 않을 채 리소스를 편집하려고 하면 아래와 같이 반환됨
+
+```java
+HTTP/1.1 423 Locked
+```
+
+- 잠근 토큰을 지정하고 PUT을 송신하면 리소스를 갱신할 수 있다.
+
+```java
+//요청
+PUT /1120002 HTTP/1.1
+If:(<opaque Locktoken:e71d4fae-5dec-22d6-fea5>)
+Content-Type: application/json
+
+{
+	"zipcode":"1120002",
+	"address":{
+		"perfecture":"도쿄도",
+		....
+	},
+...
+}
+//응답
+HTTP/1.1 200 OK
+```
+
+- 갱신이 종료되면 클라이언트는 잠금을 해제합니다. 잠금 해제는 UNLOCK을 이용합니다.
+
+```java
+//요청
+UNLOCK /1120034 HTTP/1.1
+Host: zip.ricollab.jp
+Content-Type: application/xml; charset=utf-8
+Authorization:Basic...
+Lock-Token: opaquelocktoken:e71d4fae-5dec-22d6-fea5
+
+//응답
+HTTP/1.1 200 OK
+```
+
 ### 낙관적 잠금
+
+- 비관적 잠금 : 경합X, 잠금의 권한을 가진 사람 이외에는 편집 X → 시스템이 커질수록 문제발생
+- 항상 같은 문서를 여러 사람이 계속 편집하는 경우는 거의 없다는 전제하에서 통상적인 편집에서는 문서를 잠그지 않고 경합이 일어났을 때 대처하는 구조
+- 조건부 PUT과 조건부 DELETE 사용
+
+### 조건부 PUT
+
+클라이언트가 갱신요청을 할 때 자신이 갱신하고자 하는 리소스의 변경여부를 확인하는 구조
+
+```java
+//요청
+GET /1120002 HTTP/1.1
+Host: zip.ricollab.jp
+
+//응답
+HTTP/1.1 200 OK
+Content-Type: application/json
+ETag: sample-etag-value
+{
+	"zipcode":"1120002",
+	...
+}
+
+//얻어진 ETag값을 사용해 조건부 PUT을 실행합니다.
+//리소스가 변경되어 있지 않다면 ETag의 값은 바뀌지 않기 때문에 리소스의 갱신에 성공
+//요청
+PUT /1120002 HTTP/1.1
+Host: zip.ricollab.jp
+Content-Type: application/json
+ETag: sample-etag-value
+{
+	"zipcode":"11200002"
+	...
+}
+
+//응답
+HTTP/1.1 200 OK
+```
+
+### 조건부 DELETE
+
+다른 사람이 수정한 것을 모른 채 리소스를 삭제하는 실수를 방지할 수 있다.
+
+```java
+//요청
+DELETE /1120002 HTTP/1.1
+Host: zip.ricollab.jp
+Content-Type: application/json
+If-Match: sample-etag-value
+
+//응답
+HTTP/1.1 200 OK
+```
+
+![Chapter16%20%E1%84%8A%E1%85%B3%E1%84%80%E1%85%B5%20%E1%84%80%E1%85%A1%E1%84%82%E1%85%B3%E1%86%BC%E1%84%92%E1%85%A1%E1%86%AB%20%E1%84%8B%E1%85%B0%E1%86%B8%20%E1%84%89%E1%85%A5%E1%84%87%E1%85%B5%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B4%20%E1%84%89%E1%85%A5%E1%86%AF%E1%84%80%E1%85%A8%200bbf6440ae244869a64fab47c3affaec/Untitled%203.png](Chapter16%20%E1%84%8A%E1%85%B3%E1%84%80%E1%85%B5%20%E1%84%80%E1%85%A1%E1%84%82%E1%85%B3%E1%86%BC%E1%84%92%E1%85%A1%E1%86%AB%20%E1%84%8B%E1%85%B0%E1%86%B8%20%E1%84%89%E1%85%A5%E1%84%87%E1%85%B5%E1%84%89%E1%85%B3%E1%84%8B%E1%85%B4%20%E1%84%89%E1%85%A5%E1%86%AF%E1%84%80%E1%85%A8%200bbf6440ae244869a64fab47c3affaec/Untitled%203.png)
+
+- 412 Precondition Failed - 조건이 맞지 않음
+1. 경합을 일으킨 사용자에게 확인한 후, 갱신 또는 삭제를 한다.
+2. 경합을 일으킨 데이터를 경합 리소스로서 별도의 리소스로 보전한다(PUT인 경우만)
+3. 경합을 일으킨 사용자에게 변경점을 전하고, 병합을 촉구한다(PUT인 경우만)
 
 # 09 설계의 밸런스
 
