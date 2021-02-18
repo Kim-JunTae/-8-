@@ -232,6 +232,85 @@
 
         어떻게 설명할지 고민하자
 
+        ![Chapter9%20%E1%84%83%E1%85%B5%E1%84%91%E1%85%A9%E1%86%AF%E1%84%90%E1%85%B3%20%E1%84%86%E1%85%A6%E1%84%89%E1%85%A5%E1%84%83%E1%85%B3%2035d9daff81274d7f8cbf81eeb6e345ff/Untitled%204.png](Chapter9%20%E1%84%83%E1%85%B5%E1%84%91%E1%85%A9%E1%86%AF%E1%84%90%E1%85%B3%20%E1%84%86%E1%85%A6%E1%84%89%E1%85%A5%E1%84%83%E1%85%B3%2035d9daff81274d7f8cbf81eeb6e345ff/Untitled%204.png)
+
+        ### 무엇이 출력될까?
+
+        - 1번
+
+            ```sql
+            public interface A {
+            	default void hello(){
+            		System.out.println("Hello from A");
+            	}
+            }
+
+            public interface B extend A { }
+            public interface C extend A { }
+
+            public interface D implements B, C {
+            	public static void main(String... args){
+            		new D().hello();//Q. 무엇이 출력될까?
+            	}
+            }
+            ```
+
+        - 1번 정답
+
+            답 : 'Hello from A'
+
+            이유 : D는 실제로 선택할 수 있는 메서드 선언은 하나뿐(A의 default 메서드 hello)
+
+        - 2번
+
+            ```sql
+            public interface A {
+            	default void hello(){
+            		System.out.println("Hello from A");
+            	}
+            }
+
+            public interface B extend A {
+            	default void hello(){
+            		System.out.println("Hello from B");
+            	}
+            }
+            public interface C extend A { }
+
+            public interface D implements B, C {
+            	public static void main(String... args){
+            		new D().hello();//Q. 무엇이 출력될까?
+            	}
+            }
+            ```
+
+        - 2번 정답
+
+            답 : 충돌
+
+            이유 : hello 메서드 정의하고 있다. 둘 중 하나의 메서드를 명시적으로 호출해야 한다.
+
+        - 3번 : 책 오타?
+
+            ```sql
+            public interface A { }
+
+            public interface B extend A { }
+            public interface C extend A {
+            	void hello();
+            }
+
+            public interface D implements B, C {
+            	public static void main(String... args){
+            		new D().hello();//Q. 무엇이 출력될까?
+            	}
+            }
+            ```
+
+        - 3번 정답
+
+            답 : 책 오타?
+
 ### 9.5 요약
 
 - 자바 8의 인터페이스는 구현 코드를 포함하는 디폴트 메서드, 정적 메서드를 정의할 수 있다.
