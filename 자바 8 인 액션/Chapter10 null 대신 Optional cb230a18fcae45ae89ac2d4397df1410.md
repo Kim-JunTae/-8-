@@ -234,7 +234,7 @@
     }
     ```
 
-    ### 디폴트 액션과 Optional 업랩
+    ### 디폴트 액션과 Optional 언랩
 
     - get() : 값을 읽는 가장 간단한 메서드이지만 안전하지 않다. 래핑된 값이 없으면 NoSuchElementException을 발생시킨다.
     - orElse() : 값이 없을 때 디폴트값 제공할 수 있다.
@@ -276,3 +276,96 @@
     - 퀴즈 10-2
 
     ![Chapter10%20null%20%E1%84%83%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB%20Optional%20cb230a18fcae45ae89ac2d4397df1410/Untitled%204.png](Chapter10%20null%20%E1%84%83%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB%20Optional%20cb230a18fcae45ae89ac2d4397df1410/Untitled%204.png)
+
+- Optional을 사용한 실용 예제
+    - 값이 없는 상황을 처리하던 기존의 알고리즘과는 다른 관점에서 접근해야한다.
+    → 코드 구현만 바꾸는 것이 아니라 네이티브 자바 API와 상호작용하는 방식도 교체
+
+    ### 잠재적으로 null이 될 수 있는 대상을 Optional로 감싸기
+
+    ```java
+    //기존 : null을 반환하면서 요청한 값이 없거나 어떤 문제로 계산에 실패했음을 알린다.
+    Object value = map.get("key");
+
+    //방법 1 : 기존의 방식 if-then-else
+
+    //방법 2 : Optional.ofNullable 이용
+    Optional<Object> value = Optional.ofNullable(map.get("key"));
+
+    ```
+
+    ### 예외와 Optional
+
+    자바 API는 어떤 이유에서 값을 제공할 수 없을 때 null을 반환하는 대신 예외를 발생시킬 때도 있다. (예 : Interger.parseInt(String) 정적 메서드 → try/catch)
+
+    ```java
+    //정수로 변환할 수 없는 문자열 문제를 빈 Optional로 해결할 수 있다.
+    //유틸리티 클래스 OptionalUtility를 만들자!
+    public static Optional<Integer> stringToInt(String s) {
+    	try {
+    		return Optional.of(Integer.parseInt(s));
+    	} catch(NumberFormatException e) {
+    		return Optional.empty();
+    	}
+    ```
+
+    ### 기본형 Optional과 이를 사용하지 말아야 하는 이유
+
+    음... Optional도 기본형으로 특화된 OptionalInt, OptionalLong, OptionalDouble 등의 클래스를 제공. 그러나 Optional의 최대 요소 수는 한 개이므로 성능 개선의 기대가 없다.
+
+    또한 기본형 특화 Optional은 map, flatMap, filter 등을 지원하지 않으므로 기본형 특화 Optional을 사용할 것을 권장하지 않는다.
+
+    ### 응용
+
+    - 프로그램의 설정 인수로 Properties를 전달한다고 가정
+
+    ```java
+    Properties props = new Properties();
+    props.setProperty("a", "5");
+    props.setProperty("b", "true");
+    props.setProperty("c", "-3");
+
+    public readDuration(Properties props, String name)
+
+    assertEquals(5, readDuration(param, "a"));
+    assertEquals(0, readDuration(param, "b"));
+    assertEquals(0, readDuration(param, "c"));
+    assertEquals(0, readDuration(param, "d"));
+
+    //복잡 : 프로퍼티에서 지속시간을 읽는 명령형 코드
+    public int readDuration(Properties props, String name) {
+    	String value = props.getProperty(name);
+    	//요청한 이름에 해당하는 프로퍼티가 존재하는지 확인한다.
+    	if(value != null){
+    		try {
+    			//문자열 프로퍼티를 숫자로 변환하기 위해 시도한다.
+    			int i = Integer.parseInt(value);
+    			//결과 숫자가 양수인지 확인한다.
+    			if(i > 0) {
+    				return i;
+    			}
+    		} catch (NumberFormatException nfe) { }
+    	}
+    	//하나의 조건이라도 실패하면 0을 반환한다.
+    	return 0;
+    }
+
+    //개선 : 퀴즈 10-3 Optional로 프로퍼티에서 지속시간 읽기
+    public int readDuration(Properties props, String name) {
+    	return Optional.ofNullable(props.getProperty(name))
+    								 .flatMap(OptionalUtility::stringToInt)
+    								 .filter(i -> i > 0)
+    								 .orElse(0);
+    }
+    //Optional과 스트림에서 사용한 방식은 
+    //여러 연산이 서로 연결되는 데이터베이스 질의문과 비슷한 형식을 갖는다.
+    ```
+
+### 요약
+
+- 역사적으로 프로그래밍 언어에서는 null 레퍼런스로 값이 없는 상황을 표현해왔다.
+- 자바 8에서는 값이 있거나 없음을 표현할 수 있는 클래스 java.util.Optional<T>를 제공
+- 팩토리 메서드 Optional.empty, Optional.of, Optional.ofNullable 등을 이용해서 Optional 객체를 만들 수 있다.
+- Optional 클래스는 스트림과 비슷한 연산을 수행하는 map, flatMap, filter 등의 메서드를 제공한다.
+- Optional로 값이 없는 상황을 적절하게 처리하도록 강제할 수 있다. 즉, Optional로 예상치 못한 null 예외를 방지할 수 있다.
+- Optional을 활용하면 더 좋은 API를 설계할 수 있다. 즉 사용자는 메서드의 시그니처만 보고도 Optional값이 사용되거나 반환되는지 예측할 수 있다.
