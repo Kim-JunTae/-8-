@@ -204,7 +204,83 @@
 
 - 비블록 코드 만들기
 
-# 비블록 코드 만들기
+    ```java
+    //동기 API를 이용하여 최저가격 검색 애플리케이션 개발
+    //상점 리스트
+    List<Shop> shops = Arrays.asList(new Shop("BestPrice"),
+    																 new Shop("LetsSaveBig"),
+    																 new Shop("MyFavoriteShop"),
+    																 new Shop("BuyItAll"));
+
+    //제품명 입력시 상점이름과 제품가격 문자열 정보를 포함하는 List 반환 메서드
+    //1. 기본
+    public List<Stirng> findPrices(String product){
+    	return shops.stream()
+    					    .map(shop -> String.format("%s price is %.2f",
+    																				 shop.getName(), shop.getPrice(product)))
+    						  .collect(toList());
+    }
+    //1.1. 결과와 성능 확인
+    long start = System.nanoTime();
+    System.out.println(findPrices("myPhone27S"));
+    long duration = (System.nanoTime() - start) / 1_000_000;
+    System.out.println("Done in " + duration + " msecs");
+
+    // [BestPrice price is 123.26, LetsSaveBig price is 169.47, MyFavoriteShop price is 214.13, BuyltAll price is 184.74]
+    // Done in 4032 msecs
+
+    //2. 병렬 스트림으로 요청 병렬화 하기
+    public List<Stirng> findPrices(String product){
+    	return shops.**parallelStream()**
+    					    .map(shop -> String.format("%s price is %.2f",
+    																				 shop.getName(), shop.getPrice(product)))
+    						  .collect(toList());
+    }
+
+    //2.1. 결과와 성능확인
+    // [BestPrice price is 123.26, LetsSaveBig price is 169.47, MyFavoriteShop price is 214.13, BuyltAll price is 184.74]
+    // Done in 1180 msecs
+    ```
+
+    → 더 개선할 수는 없을까? CompletableFuture 기능을 활용해서 findPrices 메서드의 동기 호출을 비동기 호출로 바꿔보자
+
+    ### CompletableFuture로 비동기 호출 구현하기
+
+    ```java
+    //CompletableFuture로 각각의 가격을 비동기적으로 계산한다.
+    public List<Stirng> findPrices(String product){
+    	List<CompletableFuture<String>> priceFutures =
+    							shops.stream()
+    					    .map(shop -> CompletableFuture.supplyAsync(
+    														() -> shop.getName() + " price is " + 
+    															    shop.getPrice(product)))
+    						  .collect(Collectors.toList());
+
+    	return priceFutures.stream()
+    										 .map(CompletableFuture::join) //모든 비동기 동작이 끝나길 기다린다.
+    									   .collect(toList());
+    }
+
+    //결과와 성능확인
+    // [BestPrice price is 123.26, LetsSaveBig price is 169.47, MyFavoriteShop price is 214.13, BuyltAll price is 184.74]
+    // Done in 2005 msecs
+    ```
+
+    - 스트림의 게으름 때문에 순차 계산이 일어나는 이유와 순차계산을 회피하는 방법
+
+    ![Chapter11%20CompletableFuture%20%E1%84%8C%E1%85%A9%E1%84%92%E1%85%A1%E1%86%B8%E1%84%92%E1%85%A1%E1%86%AF%20%E1%84%89%E1%85%AE%20%E1%84%8B%E1%85%B5%E1%86%BB%E1%84%82%E1%85%B3%E1%86%AB%20%E1%84%87%E1%85%B5%E1%84%83%20af7129f712904cad83676f1c4247a2e5/Untitled%203.png](Chapter11%20CompletableFuture%20%E1%84%8C%E1%85%A9%E1%84%92%E1%85%A1%E1%86%B8%E1%84%92%E1%85%A1%E1%86%AF%20%E1%84%89%E1%85%AE%20%E1%84%8B%E1%85%B5%E1%86%BB%E1%84%82%E1%85%B3%E1%86%AB%20%E1%84%87%E1%85%B5%E1%84%83%20af7129f712904cad83676f1c4247a2e5/Untitled%203.png)
+
+    - 만족할 만한 결과가 아니다!
+
+    ### 더 확장성이 좋은 해결 방법
+
+    - 검색해야할 다섯 번째 상점이 추가되었을때 순차버전에서는 5025 msecs, 
+    병렬에서는 2177 msecs, CompletableFuture에서는 2006 msecs
+    - 9개 상점에서는?
+    병렬 3143, CompletableFuture 3009
+    → 결과적으로는 비슷하지만 CompletableFuture에서는 병렬 스트림버전에 비해 작업에 이용할 수 있는 다양한 Executor를 지정할 수 있다는 장점이 있다.
+
+    ### 커스텀 Executor 사용하기
 
 # 비동기 작업 파이프라인 만들기
 
