@@ -282,8 +282,64 @@
 
     ### 커스텀 Executor 사용하기
 
-# 비동기 작업 파이프라인 만들기
+    - 스레드 풀 크기 조절
 
-# CompletableFuture의 종료에 대응하는 방법
+        자바 병렬 프로그래밍(Java Concurrency in Practice), 스레드 풀의 최적값을 찾는 방법 제안
 
-# 요약
+        대략적인 CPU 활용 비율 계산 N_thread = N_cpu * U_cpu * (1 + W/C)
+        N_cpu : Runtime.getRuntime().availableProcessors()가 반환하는 코어수
+        U_cpu : 0 과 1 사이의 값을 갖는 CPU 활용 비율
+        W/C는 대기시간과 계산시간의 비율
+
+    ```java
+    //1. 현재 예제 애플리케이션은 상점의 응답을 대략 99% 시간만큼 기다리므로 W/C=100
+    //2. 400스레드를 갖는 풀을 만들어야 함을 의미
+    //3. 상점 수보다 많은 스레드를 가지고 있어봐야 사용할 가능성이 없으므로 낭비다.
+    //4. 스레드 수가 많으면 서버가 크래시될 수 있으므로 
+    //   하나의 Executor에서 사용할 스레드의 최대 갯수는 100개 이하로 설정하는 것이 바람직하다.
+
+    private final Executor executor = 
+    						Executors.newFixedThreadPool(Math.min(shops.size(), 100), //상점 수 만큼의 스레드를 갖는 풀을 생성한다.(0~100)
+    																				 new ThreadFactory() {
+    														public Thread newThread(Runnable r) {
+    															Thread t = new Thread(r);
+    															t.setDaemon(true); //프로그램 종료를 방해하지 않는 데몬스레드를 사용한다.
+    															return t;
+    														}
+    });
+    ```
+
+    - 데몬 스레드 : 주 스레드의 작업을 돕는 스레드(보조), 주 스레드가 종료되면 데몬스레드도 자동 종료된다
+
+- 비동기 작업 파이프라인 만들기
+    - 하나의 할인 서비스 제공
+
+    ```java
+    public class Discount {
+    	public enum Code {
+    		NONE(0), SILVER(5), GOLD(10), PLATINUM(15), DIAMOND(20);
+    	
+    		private final int percentage;
+    	
+    		Code(int percentage) {
+    			this.percentage = percentage;
+    		}
+    	}
+    	...
+    }
+    ```
+
+    - 할인 서비스 제공
+        - 최종 가격 계산을 위한 클래스 Quote : 가게이름, 할인 전 가격, 할인된 가격
+
+        ...
+
+### 요약
+
+- 한 개 이상의 원격 외부 서비스를 사용하는 긴 동작을 실행할 때는 비동기 방식으로 애플리케이션 성능과 반응성을 향상시킬 수 있다.
+- 우리 고객에게 비동기 API를 제공하는 것을 고려해야 한다. CompletableFuture의 기능을 이용하면 쉽게 비동기 API를 구현할 수 있다.
+- CompletableFuture를 이용할 때 비동기 태스크에서 발생한 에러를 관리하고 전달할 수 있다.
+- 동기 API를 CompletableFuture로 감싸서 비동기적으로 소비할 수 있다.
+- 서로 독립적인 비동기 동작이든 아니면 하나의 비동기 동작이 다른 비동기 동작의 결과에 의존하는 상황이든 여러 비동기 동작을 조립하고 조합할 수 있다.
+- CompletableFuture에 콜백을 등록해서 Future가 동작을 끝내고 결과를 생산했을 때 어떤 코드를 실행하도록 지정할 수 있다.
+- CompletableFuture 리스트의 모든 값이 완료될 때까지 기다릴지 아니면 하나의 갑만 완료되길 기다릴지 선택할 수 있다.
