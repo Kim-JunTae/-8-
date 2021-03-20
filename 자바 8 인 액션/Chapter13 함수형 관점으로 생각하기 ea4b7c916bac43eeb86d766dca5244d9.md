@@ -130,6 +130,79 @@
 
 - 참조 투명성
 
+    같은 인수로 함수를 호출했을 때 항상 같은 결과를 반환한다면 참조적으로 투명한 함수라 표현
+
+    ex) replace() 함수
+
+    - 참조 투명성을 위배하는 함수
+    Random.nextInt
+    Scanner 객체 nextLine메서드 호출 시 매번 다른 결과가 호출될 수 있기 때문
+
+    참조투명성은 비싸거나 오랜 시간이 걸리는 연산을 기억화 또는 캐싱을 통해 다시 계산하지 않고 저장하는 최적화 기능 제공(14.5절)
+
+    ### 참조 투명성과 관련된 문제
+
+    예시 : List를 반환하는 메서드 두번 호출
+
+    두 번의 호출 결과로 같은 요소를 포함하지만 서로 다른 메모리 공간에 생성된 리스트를 참조
+
+    결과 리스트가 가변 객체라면(반환된 두 리스트가 같은 객체라 할 수 없으므로) 리스트를 반환하는 메서드는 참조적으로 투명한 메서드가 아니라는 결론
+
+    결과 리스트를 (불변의) 순수 값으로 사용할 것이라면 두 리스트가 같은 객체라고 볼 수 있으므로 리스트 생성 함수는 참조적으로 투명한 것으로 간주할 수 있다.
+
+- 함수형 프로그래밍 실전 연습
+    - {1, 4, 9}처럼 List<Integer>가 주어졌을 때 이것의 모든 서브집합의 멤버로 구성된 List<List<Integer>>를 만드는 프로그램
+
+        ```java
+        static List<List<Integer>> subsets(List<Integer> list){
+        	if(list.isEmpty()) {
+        		List<List<Integer>> ans = new ArrayList<>();
+        		ans.add(Collections.emptyList());
+        		return ans;
+        	}
+        	Integer first = list.get(0);
+        	List<Integer> rest = list.subList(1, list.size());
+
+        	List<List<Integer>> subans = subset(rest);
+        	List<List<Integer>> subans2 = insertAll(first, subans);
+        	return concat(subans, subans2);
+        }
+
+        static List<List<Integer>> insertAll(Integer first, List<List<Integer>> lists) {
+        	List<List<Integer>> result = new ArrayList<>();
+        	for(List<Integer> list : lists) {
+        		List<Integer> copyList = new ArrayList<>();
+        		copyList.add(first);
+        		copyList.addAll(list);
+        		result.add(copyList);
+        	}
+        	return result;
+        }
+
+        static List<List<Integer>> concat(List<List<Integer>> a, List<List<Integer>> b) {
+        	List<List<Integer>> r = new ArrayList<>(a);
+        	r.addAll(b);
+        	return r;
+        }
+        ```
+
+- 재귀와 반복
+
+    순수 함수형 프로그래밍 언어에서는 반복문을 포함하지 않는다. 변화가 자연스럽게 일어날 수 있기 때문이다.
+    → 재귀로 구현하여 루프 단계마다 갱신되는 반복 변수를 제거
+
+    반복코드와 재귀코드 : 메모리 사용량의 차이.
+
+    재귀코드에서의 메모리 사용량이 많은 단점을 해결하기 위해 **꼬리 호출 최적화**를 제시
+
+    ![Chapter13%20%E1%84%92%E1%85%A1%E1%86%B7%E1%84%89%E1%85%AE%E1%84%92%E1%85%A7%E1%86%BC%20%E1%84%80%E1%85%AA%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%B7%E1%84%8B%E1%85%B3%E1%84%85%E1%85%A9%20%E1%84%89%E1%85%A2%E1%86%BC%E1%84%80%E1%85%A1%E1%86%A8%E1%84%92%E1%85%A1%E1%84%80%E1%85%B5%20ea4b7c916bac43eeb86d766dca5244d9/Untitled%204.png](Chapter13%20%E1%84%92%E1%85%A1%E1%86%B7%E1%84%89%E1%85%AE%E1%84%92%E1%85%A7%E1%86%BC%20%E1%84%80%E1%85%AA%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%B7%E1%84%8B%E1%85%B3%E1%84%85%E1%85%A9%20%E1%84%89%E1%85%A2%E1%86%BC%E1%84%80%E1%85%A1%E1%86%A8%E1%84%92%E1%85%A1%E1%84%80%E1%85%B5%20ea4b7c916bac43eeb86d766dca5244d9/Untitled%204.png)
+
+    ![Chapter13%20%E1%84%92%E1%85%A1%E1%86%B7%E1%84%89%E1%85%AE%E1%84%92%E1%85%A7%E1%86%BC%20%E1%84%80%E1%85%AA%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%B7%E1%84%8B%E1%85%B3%E1%84%85%E1%85%A9%20%E1%84%89%E1%85%A2%E1%86%BC%E1%84%80%E1%85%A1%E1%86%A8%E1%84%92%E1%85%A1%E1%84%80%E1%85%B5%20ea4b7c916bac43eeb86d766dca5244d9/Untitled%205.png](Chapter13%20%E1%84%92%E1%85%A1%E1%86%B7%E1%84%89%E1%85%AE%E1%84%92%E1%85%A7%E1%86%BC%20%E1%84%80%E1%85%AA%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%B7%E1%84%8B%E1%85%B3%E1%84%85%E1%85%A9%20%E1%84%89%E1%85%A2%E1%86%BC%E1%84%80%E1%85%A1%E1%86%A8%E1%84%92%E1%85%A1%E1%84%80%E1%85%B5%20ea4b7c916bac43eeb86d766dca5244d9/Untitled%205.png)
+
+    자바는 ... X
+
+    결론 : 자바 8에서는 반복을 스트림으로 대체해서 변화를 피할 수 있다. 또한 반복을 재귀로 바꾸어 간결하고 부작용이 없는 알고리즘을 만들 수 있다.
+
 ### 요약
 
 - 공유된 가변 자료구조를 줄이는 것은 장기적으로 프로그램을 유지보수하고 디버깅하는데 도움이 된다.
